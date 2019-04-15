@@ -9,9 +9,30 @@ This data analysis was performed using RStudio.
 First of all, the data was loaded into R and all packages necessary for the analysis were loaded into R. 
   
    
-```{r loading data, echo=TRUE, results='hide'}
+
+```r
 data<-read.csv("activity.csv")
 library(dplyr)
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+```
+
+```
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+```
+
+```
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
 library(lattice)
 ```
  
@@ -20,7 +41,8 @@ The data were then preprocessed to allow for exploratory data analysis. To this
 end, the data were separated according to the date variable, using the group_by function of the dplyr package, and stored in a new table named "split_data". The total number of steps per day was then calculated using the summarise function and the results stored in the "total" table.  
   
   
-```{r preprocessing, echo=TRUE}
+
+```r
 split_data<-group_by(data,date)
 total<-summarise(split_data,steps=sum(steps))
 ```
@@ -32,17 +54,32 @@ total<-summarise(split_data,steps=sum(steps))
 The total number of steps per day was then visualized through a simple histogram.  
   
   
-```{r histogram, echo=TRUE}
+
+```r
 hist(total$steps,main="Total number of steps per day",xlab="Steps",breaks=c(0,2500,5000,7500,10000,12500,15000,17500,20000,22500,25000))
 ```
+
+![plot of chunk histogram](figure/histogram-1.png)
   
   
 The mean and median number of steps per day were calculated using simple functions.  
   
   
-```{r descriptive statistics, echo=TRUE}
+
+```r
 mean(total$steps,na.rm=TRUE)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(total$steps,na.rm=TRUE)
+```
+
+```
+## [1] 10765
 ```
   
   
@@ -55,11 +92,24 @@ The mean number of total steps taken per day is 10766.19 and the median value is
 To evaluate the average daily activity pattern, the number of steps taken for each 5-minute interval across all days of data collection was averaged, using the dplyr package in a similar fashion as before, only separating the data according to the interval variable this time. The resulting "average" table was then used to produce a time series plot. The 835th 5-minute interval contains, on average, the highest number of steps, with approximately 206 steps.  
   
   
-```{r daily pattern, echo=TRUE}
+
+```r
 split_data2<-group_by(data,interval)
 average<-summarise(split_data2,average=mean(steps,na.rm=TRUE))
 plot(average$interval,average$average,type="l",xlab="Interval",ylab="Steps")
+```
+
+![plot of chunk daily pattern](figure/daily pattern-1.png)
+
+```r
 average[average$average==max(average$average,na.rm=TRUE),]
+```
+
+```
+## # A tibble: 1 x 2
+##   interval average
+##      <int>   <dbl>
+## 1      835    206.
 ```
   
   
@@ -69,15 +119,21 @@ average[average$average==max(average$average,na.rm=TRUE),]
 The dataset includes 2304 missing values for the number of steps taken.  
   
   
-```{r missing values, echo=TRUE}
+
+```r
 length(which(is.na(data$steps))==TRUE)
+```
+
+```
+## [1] 2304
 ```
   
   
 Since the presence of missing values may introduce bias into certain summaries and calculations of the data, a new data table "new_table" where all missing values were replaced was generated. All missing values were found and replaced by their corresponding 5-minute interval average value.  
   
   
-```{r NA replacement, echo=TRUE}
+
+```r
 new_data<-read.csv("activity.csv")
 for(i in 1:length(new_data$steps)){
        if(is.na(new_data$steps[i]==TRUE)){
@@ -90,12 +146,29 @@ for(i in 1:length(new_data$steps)){
 The preprocessing of the data and exploratory data analysis was then repeated using this new dataset. The input of missing values using the chosen method does not affect the mean, only the median values, which is now similar to the mean (10766.19), unlike what was observed during the first attempt at this analysis.  
   
   
-```{r repeating analysis, echo=TRUE}
+
+```r
 new_split_data<-group_by(new_data,date)
 new_total<-summarise(new_split_data,steps=sum(steps))
 hist(new_total$steps,main="Total number of steps per day (NA removed)",xlab="Steps",breaks=c(0,2500,5000,7500,10000,12500,15000,17500,20000,22500,25000))
+```
+
+![plot of chunk repeating analysis](figure/repeating analysis-1.png)
+
+```r
 mean(new_total$steps)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(new_total$steps)
+```
+
+```
+## [1] 10766.19
 ```
   
   
@@ -105,7 +178,8 @@ median(new_total$steps)
 To explore the differences between activity patterns among weekends and weekdays, a new factor variable ("weekdays") with two levels, "weekend" and "weekday", was created, stating wether the day of sampling was part of the weekend or not. The interval average data was summarized as before and the lattice system used to create two time series plots, with "weekdays" as the conditioning variable.  
   
   
-```{r weekdays and weekends, echo=TRUE}
+
+```r
 new_data<-mutate(new_data,weekdays=weekdays(as.POSIXlt(date)))
 for(i in 1:length(new_data$weekdays)){
        if(new_data$weekdays[i]=="sábado"|new_data$weekdays[i]=="domingo"){
@@ -119,6 +193,8 @@ new_split_data2<-group_by(new_data,weekdays,interval)
 new_average<-summarise(new_split_data2,average=mean(steps))
 xyplot(average~interval|weekdays,new_average,type="l",ylab="Steps",xlab="Interval")
 ```
+
+![plot of chunk weekdays and weekends](figure/weekdays and weekends-1.png)
   
   
 As observable in the time series plots, the activity pattern is quite different, with the number of steps taken more evenly spread out over time on weekends.  
